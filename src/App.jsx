@@ -4,6 +4,9 @@ import ImageGallery from "./components/ImageGallery/ImageGallery";
 import { useEffect, useState } from "react";
 import Loader from "./components/Loader/Loader";
 import "./App.css";
+import LoadMoreBtn from "./components/LoadMoreBtn/LoadMoreBtn";
+import toast, { Toaster } from "react-hot-toast";
+import ImageModal from "./components/ImageModal/ImageModal";
 
 function App() {
   const [query, setQuery] = useState("");
@@ -11,6 +14,8 @@ function App() {
   const [images, setImages] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedImageUrl, setSelectedImageUrl] = useState("");
 
   useEffect(() => {
     if (!query) return;
@@ -19,10 +24,17 @@ function App() {
 
     fetchImages(query, page)
       .then(({ results, total }) => {
-        setImages((prev) => [...prev, ...results]);
+        if (results.length == 0) {
+          toast.error("No results found for your search query");
+          return;
+        }
+        setImages((img) => [...img, ...results]);
         setTotal(total);
       })
-      .catch((err) => console.error("Error fetching images:", err))
+      .catch((err) => {
+        console.error("Error fetching images:", err);
+        toast.error("Error fetching images. Please try again later.");
+      })
       .finally(() => {
         setLoading(false);
       });
@@ -35,12 +47,37 @@ function App() {
     setTotal(0);
   };
 
+  const handleLoadMoreBtn = () => {
+    setPage(page + 1);
+  };
+
+  const handleImageClick = (imageUrl) => {
+    if (!modalOpen) {
+      setSelectedImageUrl(imageUrl);
+      setModalOpen(true);
+    }
+  };
+
+  const handleCloseModal = () => {
+    if (modalOpen) {
+      setModalOpen(false);
+    }
+  };
+
   return (
     <>
       <SearchBar onSubmit={handleSubmit} />
-      <ImageGallery images={images} />
+      <Toaster position="bottom-center" reverseOrder={false} />
+      <ImageGallery images={images} onImageClick={handleImageClick} />
       <Loader loading={loading} />
-      {total > 0 && images.length < total}
+      {total > 0 && images.length < total && (
+        <LoadMoreBtn onClick={handleLoadMoreBtn}>Load more</LoadMoreBtn>
+      )}
+      <ImageModal
+        isOpen={modalOpen}
+        onClose={handleCloseModal}
+        imageUrl={selectedImageUrl}
+      />
     </>
   );
 }

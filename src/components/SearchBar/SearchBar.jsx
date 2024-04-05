@@ -35,8 +35,8 @@ const SearchBar = ({ onSubmit }) => {
           placeholder="Search images and photos"
           onChange={saveImage}
           value={images}
-          //   autocomplete="off"
-          //   autofocus
+          autoComplete="off"
+          autoFocus
         />
       </form>
 
